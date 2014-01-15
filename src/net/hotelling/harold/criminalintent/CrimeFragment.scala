@@ -1,24 +1,28 @@
 package net.hotelling.harold.criminalintent
 
+import java.util.UUID
+import Helpers.blockToTextWatcher
+import Helpers.onClick
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.text.Editable
-import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.CheckBox
 import android.widget.Button
-import android.widget.CompoundButton.OnCheckedChangeListener
+import android.widget.CheckBox
 import android.widget.CompoundButton
-import Helpers._
-import java.util.UUID
-import android.util.Log
+import android.widget.CompoundButton.OnCheckedChangeListener
+import android.widget.EditText
+import android.content.Intent
+import android.app.Activity
+import java.util.Date
 
 object CrimeFragment {
   val TAG = "CrimeFragment"
   val EXTRA_CRIME_ID = "net.hotelling.harold.criminalintent.extra_crime_fragment_crime_id" 
+  val DIALOG_DATE = "date"
+  val REQUEST_DATE = 0
 
   def apply(crimeId: UUID): CrimeFragment = {
     val args = new Bundle()
@@ -56,8 +60,14 @@ class CrimeFragment extends Fragment {
     mTitle.setText(mCrime.getTitle)
     mTitle addTextChangedListener { s: String => mCrime.setTitle(s) }
 
-    mDateButton.setText(mCrime.getDate.toString)
     mDateButton.setEnabled(true)
+    mDateButton setOnClickListener { v: View =>
+      val fm = getActivity().getSupportFragmentManager()
+      val dialog = DatePickerFragment(mCrime.getDate)
+      dialog.setTargetFragment(CrimeFragment.this, REQUEST_DATE)
+      dialog.show(fm, DIALOG_DATE)
+    }
+    updateDate()
 
     mSolvedCheckBox.setChecked(mCrime.isSolved)
     mSolvedCheckBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
@@ -69,4 +79,15 @@ class CrimeFragment extends Fragment {
     v
   }
 
+  override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    if (requestCode == REQUEST_DATE && resultCode == Activity.RESULT_OK) {
+      val date = data.getSerializableExtra(DatePickerFragment.EXTRA_DATE).asInstanceOf[Date]
+      mCrime setDate date
+      updateDate()
+    }
+  }
+
+  private def updateDate() {
+    mDateButton setText mCrime.getDate.toString
+  }
 }
