@@ -92,6 +92,11 @@ class CrimeFragment extends Fragment {
     v
   }
 
+  override def onPause() {
+    super.onPause()
+    CrimeLab.get(getActivity).saveCrimes()
+  }
+
   override def onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
     if (requestCode == REQUEST_DATE && resultCode == Activity.RESULT_OK) {
       val date = data.getSerializableExtra(DatePickerFragment.EXTRA_DATE).asInstanceOf[Date]

@@ -125,6 +125,11 @@ class CrimeListFragment extends ListFragment {
     }
   }
 
+  override def onPause() {
+    super.onPause()
+    CrimeLab.get(getActivity).saveCrimes()
+  }
+
   override def onResume() {
     super.onResume()
     getListAdapter().asInstanceOf[CrimeAdapter].notifyDataSetChanged()
