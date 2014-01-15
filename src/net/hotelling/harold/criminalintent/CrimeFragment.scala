@@ -17,6 +17,10 @@ import android.widget.EditText
 import android.content.Intent
 import android.app.Activity
 import java.util.Date
+import android.os.Build
+import android.annotation.TargetApi
+import android.view.MenuItem
+import android.support.v4.app.NavUtils
 
 object CrimeFragment {
   val TAG = "CrimeFragment"
@@ -45,13 +49,22 @@ class CrimeFragment extends Fragment {
 
   override def onCreate(savedInstanceState: Bundle) {
     super.onCreate(savedInstanceState)
+    setHasOptionsMenu(true)
+
     val crimeId = getArguments().getSerializable(EXTRA_CRIME_ID).asInstanceOf[UUID]
     Log.d(TAG, "onCreate: crimeId = " + crimeId)
     mCrime = CrimeLab.get(getActivity()).getCrime(crimeId)
   }
 
+  @TargetApi(11)
   override def onCreateView(inflater: LayoutInflater, container: ViewGroup, savedInstanceState: Bundle): View = {
     val v = inflater.inflate(R.layout.fragment_crime, container, false)
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+      if (NavUtils.getParentActivityName(getActivity) != null) {
+        getActivity.getActionBar setDisplayHomeAsUpEnabled true
+      }
+    }
 
     mTitle = v.findViewById(R.id.crimeTitle).asInstanceOf[EditText]
     mDateButton = v.findViewById(R.id.crime_date).asInstanceOf[Button]
@@ -84,6 +97,17 @@ class CrimeFragment extends Fragment {
       val date = data.getSerializableExtra(DatePickerFragment.EXTRA_DATE).asInstanceOf[Date]
       mCrime setDate date
       updateDate()
+    }
+  }
+
+  override def onOptionsItemSelected(item: MenuItem): Boolean = {
+    if (item.getItemId == android.R.id.home) {
+      if (NavUtils.getParentActivityName(getActivity) != null) {
+        NavUtils.navigateUpFromSameTask(getActivity)
+      }
+      true
+    } else {
+      super.onOptionsItemSelected(item)
     }
   }
 

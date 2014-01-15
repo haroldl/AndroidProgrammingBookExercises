@@ -27,7 +27,11 @@
             android:label="@string/app_name" />
         <activity
             android:name="net.hotelling.harold.criminalintent.CrimePagerActivity"
-            android:label="@string/app_name" />
+            android:label="@string/app_name">
+          <meta-data
+              android:name="android.support.PARENT_ACTIVITY"
+              android:value="net.hotelling.harold.criminalintent.CrimeListActivity"/>
+        </activity>
     </application>
 
 </manifest>

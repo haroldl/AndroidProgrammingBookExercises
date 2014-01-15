@@ -1,29 +1,49 @@
 package net.hotelling.harold.criminalintent
 
-import android.support.v4.app.ListFragment
-import android.os.Bundle
 import java.util.{List => JList}
-import android.widget.ArrayAdapter
-import android.widget.ListView
-import android.view.View
-import android.util.Log
-import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.CheckBox
+import Helpers.onClick
+import android.annotation.TargetApi
 import android.content.Intent
+import android.os.Bundle
+import android.support.v4.app.ListFragment
+import android.util.Log
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Button
-
-import Helpers._
+import android.widget.CheckBox
+import android.widget.ListView
+import android.widget.TextView
+import android.os.Build
+import android.view.LayoutInflater
 
 class CrimeListFragment extends ListFragment {
   val TAG = "CrimeListFragment"
 
   private var mCrimes: JList[Crime] = _
+  private var mSubtitleVisible: Boolean = _
 
   override def onCreate(savedInstanceState: Bundle) {
     super.onCreate(savedInstanceState)
+    setHasOptionsMenu(true)
     getActivity().setTitle(R.string.crimes_title)
     mCrimes = CrimeLab.get(getActivity()).getCrimes()
+    setRetainInstance(true)
+    mSubtitleVisible = false
+  }
+
+  @TargetApi(11)
+  override def onCreateView(inflater: LayoutInflater, parent: ViewGroup, savedInstanceState: Bundle): View = {
+    val v = super.onCreateView(inflater, parent, savedInstanceState)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+      if (mSubtitleVisible) {
+        getActivity.getActionBar setSubtitle R.string.subtitle
+      }
+    }
+    v
   }
 
   override def onViewCreated(view: View, savedInstanceState: Bundle) {
@@ -37,7 +57,7 @@ class CrimeListFragment extends ListFragment {
       view: View => {
         val newCrime = new Crime()
         newCrime setTitle "New Crime"
-        mCrimes add newCrime
+        CrimeLab.get(getActivity) addCrime newCrime
         adapter.notifyDataSetChanged()
       }
     }
@@ -48,6 +68,15 @@ class CrimeListFragment extends ListFragment {
     // Android Javadoc says to call addFooterView before setListAdapter
     getListView().addFooterView(footerView)
     setListAdapter(adapter)
+  }
+
+  override def onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+    super.onCreateOptionsMenu(menu, inflater)
+    inflater.inflate(R.menu.fragment_crime_list, menu)
+    val showSubtitle = menu findItem R.id.menu_item_show_subtitle
+    if (mSubtitleVisible && showSubtitle != null) {
+      showSubtitle setTitle R.string.hide_subtitle
+    }
   }
 
   override def onListItemClick(lv: ListView, v: View, position: Int, id: Long) {
@@ -63,6 +92,37 @@ class CrimeListFragment extends ListFragment {
     val intent = new Intent(getActivity(), classOf[CrimePagerActivity])
     intent.putExtra(CrimeFragment.EXTRA_CRIME_ID, crime.getId)
     startActivity(intent)
+  }
+
+  @TargetApi(11)
+  override def onOptionsItemSelected(item: MenuItem): Boolean = {
+    item.getItemId match {
+      case R.id.menu_item_new_crime => {
+        val crime = new Crime()
+        CrimeLab.get(getActivity) addCrime crime
+        val i = new Intent(getActivity, classOf[CrimePagerActivity])
+        i.putExtra(CrimeFragment.EXTRA_CRIME_ID, crime.getId)
+        startActivityForResult(i, 0)
+        true
+      }
+      case R.id.menu_item_show_subtitle => {
+        val actionBar = getActivity.getActionBar
+        Option(actionBar.getSubtitle) match {
+          case Some(subtitle) => {
+            actionBar setSubtitle null
+            mSubtitleVisible = false
+            item setTitle R.string.show_subtitle
+          }
+          case None => {
+            actionBar setSubtitle R.string.subtitle
+            mSubtitleVisible = true
+            item setTitle R.string.hide_subtitle
+          }
+        }
+        true
+      }
+      case _ => super.onOptionsItemSelected(item)
+    }
   }
 
   override def onResume() {
