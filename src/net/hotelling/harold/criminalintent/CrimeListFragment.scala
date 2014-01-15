@@ -60,7 +60,7 @@ class CrimeListFragment extends ListFragment {
     val title2 = crime2.getTitle
     Log.d(TAG, s"$title2 was clicked")
     
-    val intent = new Intent(getActivity(), classOf[CrimeActivity])
+    val intent = new Intent(getActivity(), classOf[CrimePagerActivity])
     intent.putExtra(CrimeFragment.EXTRA_CRIME_ID, crime.getId)
     startActivity(intent)
   }
