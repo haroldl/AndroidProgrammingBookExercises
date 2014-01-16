@@ -33,6 +33,10 @@ public class CrimeLab {
     mCrimes.add(c);
   }
 
+  public void deleteCrime(Crime c) {
+    mCrimes.remove(c);
+  }
+
   public static CrimeLab get(Context c) {
     if (sCrimeLab == null) {
       sCrimeLab = new CrimeLab(c.getApplicationContext());

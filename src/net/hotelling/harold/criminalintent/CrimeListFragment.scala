@@ -15,10 +15,16 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
-import android.widget.ListView
 import android.widget.TextView
 import android.os.Build
 import android.view.LayoutInflater
+import android.view.ContextMenu
+import android.view.ContextMenu.ContextMenuInfo
+import android.widget.AdapterView.AdapterContextMenuInfo
+import android.widget.ListView
+import android.widget.AbsListView
+import android.widget.AbsListView.MultiChoiceModeListener
+import android.view.ActionMode
 
 class CrimeListFragment extends ListFragment {
   val TAG = "CrimeListFragment"
@@ -43,6 +49,36 @@ class CrimeListFragment extends ListFragment {
         getActivity.getActionBar setSubtitle R.string.subtitle
       }
     }
+    
+    val listView = v.findViewById(android.R.id.list).asInstanceOf[ListView]
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+      registerForContextMenu(listView)
+    } else {
+      listView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE_MODAL)
+      listView.setMultiChoiceModeListener(new MultiChoiceModeListener() {
+        override def onItemCheckedStateChanged(mode: ActionMode, pos: Int, id: Long, checked: Boolean) {}
+        override def onCreateActionMode(mode: ActionMode, menu: Menu) = {
+          mode.getMenuInflater.inflate(R.menu.crime_list_item_context, menu)
+          true
+        }
+        override def onPrepareActionMode(mode: ActionMode, menu: Menu) = false
+        override def onDestroyActionMode(mode: ActionMode) {}
+        override def onActionItemClicked(mode: ActionMode, item: MenuItem) = item.getItemId match {
+          case R.id.menu_item_delete_crime => {
+            val adapter = getListAdapter().asInstanceOf[CrimeAdapter]
+            val lab = CrimeLab.get(getActivity)
+            (0 until adapter.getCount).reverse foreach {
+              i => if (getListView isItemChecked i) lab deleteCrime adapter.getItem(i)
+            }
+            mode.finish()
+            adapter.notifyDataSetChanged()
+            true
+          }
+          case _ => false
+        }
+      })
+    }
+
     v
   }
 
@@ -122,6 +158,25 @@ class CrimeListFragment extends ListFragment {
         true
       }
       case _ => super.onOptionsItemSelected(item)
+    }
+  }
+
+  override def onCreateContextMenu(menu: ContextMenu, v: View, menuInfo: ContextMenuInfo) {
+    getActivity.getMenuInflater.inflate(R.menu.crime_list_item_context, menu)
+  }
+
+  override def onContextItemSelected(item: MenuItem): Boolean = {
+    val info = item.getMenuInfo().asInstanceOf[AdapterContextMenuInfo]
+    val pos = info.position
+    val adapter = getListAdapter().asInstanceOf[CrimeAdapter]
+    val crime = adapter getItem pos
+    item.getItemId match {
+      case R.id.menu_item_delete_crime => {
+        CrimeLab.get(getActivity) deleteCrime crime
+        adapter.notifyDataSetChanged()
+        true
+      } 
+      case _ => super.onContextItemSelected(item)
     }
   }
 
